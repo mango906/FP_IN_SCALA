@@ -5,7 +5,7 @@
 
 ## Part 1 함수형 프로그래밍 입문
 
-1. [함수형 프로그래밍이란 무엇인가?]()
+1. [함수형 프로그래밍이란 무엇인가?](https://github.com/mango906/FP_IN_SCALA/blob/master/Part1/Chapter1.md)
 
 
 
