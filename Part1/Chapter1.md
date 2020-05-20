@@ -21,7 +21,7 @@
 
 ## 1.1 FP의 이점: 간단한 예제
 
-#### 1.1.1 부수 효과가 있는 프로그램
+### 1.1.1 부수 효과가 있는 프로그램
 
 ```scala
 class Cafe{
@@ -59,7 +59,49 @@ class Cafe{
 
 검사 외에도 이와 같은 방법은 `buyCoffee` 함수를 재사용하기 어렵다는 문제가 있다. 예를 들어 커피를 열두 잔 주문한다고 하자. 그렇다면 loop를 돌려 `buyCoffee` 함수를 열두 번 호출하면 될것이다.  그렇다면 신용카드에는 열두 번의 청구가 발생할 것이고, 12번의 카드 수수료가 발생할 것이다. 이러한 문제는 특별한 논리(logic)를 갖춘 `buyCoffees` 라는 새로운 함수를 만들면 될 것이다. 지금 예제의 `buyCoffee` 함수는 아주 간단하므로 새 함수를 만드는 일이 어렵지 않지만, 그렇지 않을 경우 코드의 재사용성과 합성(composition) 능력에 해가 될 수 있다.
 
+### 1.1.2 함수적 해법: 부수 효과의 제거
 
+이에 대한 함수적 해법은 부수 효과들을 제거하고 `buyCoffee` 가 `Coffee` 뿐만 아니라 **청구건을 하나의 값으로 돌려주게** 하는 것이다. 
 
+```scala
+class Cafe{
+  def buyCoffee(cc: CreditCard) : (Coffee, Charge) = {
+    val cup = new Coffee()
+    (cup, Charge(cc, cup.price))
+  }
+}
 
+case class Charge(cc: CreditCard, amount: Double){
+  def combine(other: Charge): Charge =
+  	if(cc == other.cc)
+  		Charge(cc, vamount + other.amount)
+  	else 
+  		throw new Exception("Can't combine charges to diffrent cards")
+}
+```
+
+이로써 `buyCoffee` 함수는 `Coffee` 뿐만 아니라 `Charge` 도 리턴한다. 이제 `buyCoffee` 함수를 재사용해 `buyCoffees` 함수를 만들 수 있다.
+
+```scala
+class Cafe{
+  def buyCoffee(cc: CreditCard): (Coffee, Charge) = ...
+  
+  def buyCoffess(cc: CreditCard, n: Int): (List[Coffee], Charge) = {
+    val purchases = List[(Coffee, Charge)] = List.fill(n)(buyCoffee(cc))
+    val (coffees, charges) =
+    	purchase.unzip(coffees, charges.reduce((c1, c2) => c1.combine(c2))) 
+  }
+}
+```
+
+이제 `buyCoffee` 를 재사용하여 `buyCoffees` 를 정의하였으며, 두 함수 모두 `Payments` 인터페이스의 Mock을 정의하지 않고도 손쉽게 검사할 수 있다. 실제로 `Cafe` 는 이제 `Charge` 의 대금이 어떻게 처리되는지 전혀 알지 못한다.
+
+`Charge` 를 입급(first-class) 값으로 만들면, 청구건들을 다루는 업무 논리(business logic)를 좀 더 쉽게 조립할 수 있다. 예를 들어 커피숍에서 몇 시간 일하면서 커피를 여러 번 주문했다고 할 때, 같은 카드에 대한 청구건들을 하나의 `List[Charge]` 로 취합하는 다음과 같은 함수를 작성할 수 있다.
+
+```scala
+def coalesce(charges: List[Charge]): List[Charge] = 
+	charges.groupBy(_.cc).values.map(_.reduce(_ combine _)).toList
+```
+
+[일급 객체(First-Class) 란?]([https://medium.com/@lazysoul/functional-programming-%EC%97%90%EC%84%9C-1%EA%B8%89-%EA%B0%9D%EC%B2%B4%EB%9E%80-ba1aeb048059](https://medium.com/@lazysoul/functional-programming-에서-1급-객체란-ba1aeb048059))
 
