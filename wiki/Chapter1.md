@@ -125,5 +125,51 @@ def buyCoffee(cc: CreditCard) : Coffee = {
 }
 ```
 
-`cc.charge(cup.price)` 의 반환형식이 무엇이든 `buyCoffee` 는 그 반환값을 폐기한다. 따라서 `buyCoffee` 의 평가 결과는 그냥 cup이며, 이는 `new Coffee()` 와 동일하다. `buyCoffee` 가 순수하려면 임의의 `p` 에 대해 `p(buyCoffee(aliceCreditCard))` 가 `p(new Coffee())` 와 동일하게 작동해야한다.  참조 투명성은 함수가 **수행하는** 모든 것이 함수가 돌려주는 **값** 으로 대표된다는 불변 조건을 강제한다. 이러한 제약을 지키면 **치환 모형** 이라는 프로그램 평가에 대한 간단하고도 자연스러운 추론 모형이 가능해진다. 참조에 투명한 표현식들의 계산 과정은 마치 대수 방정식을 풀 때와 아주 비슷하다. 표현식의 모든 부분을 전개(확장)하고, 모든 변수를 해당 값으로 치환하고 그것들을 가장 간단한 형태로 환원(축약)하면 된다. 각 단계마다 하나의 항(term)을 그에 동등한 것으로 대체한다. 
+`cc.charge(cup.price)` 의 반환형식이 무엇이든 `buyCoffee` 는 그 반환값을 폐기한다. 따라서 `buyCoffee` 의 평가 결과는 그냥 cup이며, 이는 `new Coffee()` 와 동일하다. `buyCoffee` 가 순수하려면 임의의 `p` 에 대해 `p(buyCoffee(aliceCreditCard))` 가 `p(new Coffee())` 와 동일하게 작동해야한다.  참조 투명성은 함수가 **수행하는** 모든 것이 함수가 돌려주는 **값** 으로 대표된다는 불변 조건을 강제한다. 이러한 제약을 지키면 **치환 모형** 이라는 프로그램 평가에 대한 간단하고도 자연스러운 추론 모형이 가능해진다. 참조에 투명한 표현식들의 계산 과정은 마치 대수 방정식을 풀 때와 아주 비슷하다. 표현식의 모든 부분을 전개(확장)하고, 모든 변수를 해당 값으로 치환하고 그것들을 가장 간단한 형태로 환원(축약)하면 된다. 각 단계마다 하나의 항(term)을 그에 동등한 것으로 대체한다. 참조 투명성은 프로그램에 대한 **등식적 추론**을 가능하게 한다.
 
+* 참조에 투명한 함수의 예
+
+```
+scala> val x = "Hello, World"
+x: java.lang.String = Hello.world
+
+scala> val r1 = x.reverse
+r1: String = dlroW ,olleH
+
+scala> var r2 = x.reverse
+r2: String = dlrow ,olleH	// r1과 r2는 같다.
+
+scala> val r1 = "Hello World".reverse
+r1: String = dlroW ,olleH
+
+scala> val r2 = "Hello World".reverse
+r2: String = dlroW ,olleH
+
+```
+
+* 참조에 투명하지 않은 함수의 예
+
+```
+scala> val x = new StringBuilder("Hello")
+x: java.lang.StringBuilder = Hello
+
+scala> val y = x.append(", World")
+y: java.lang.StringBuilder = Hello, World
+
+scala> val r1 = y.toString
+r1: java.lang.String = Hello, World
+
+scala> val r2 = y.toString
+r2: java.lang.String = Hello, World	// r1과 r2는 같다.
+
+scala> val x = new StringBuilder("Hello")
+x: java.lang.StringBuilder = Hello
+
+scala> val r1 = x.append(", World").toString
+r1: java.lang.String = Hello, World
+
+scala> val r2 = x.append(", World").toString
+r2: java.lang.String = Hello, World, WOrld	// 이제 r1과 r2는 같지않다.
+```
+
+따라서 `StringBuilder.append` 는 순수 함수가 **아니라는** 결론을 내릴 수 있다. 비록 `r1` 과 `r2` 가 같은 표현식처럼 보이지만 사실을 동일한 `StringBuilder` 의 서로 다른 두 값을 참조한다. 이와같이 부수 효과가 존재하면 프로그램의 행동에 관한 추론이 어려워진다. 반면 치환 모형은 부수 효과가 오직 평과되는 표현식에만 영향을 미치므로 **국소 추론(local reasoning)**만으로도 코드를 이해할 수 있다.
